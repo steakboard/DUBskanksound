@@ -1,0 +1,42 @@
+name: Build plugin
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            extra: ""
+          - os: macos-latest
+            name: macos
+            extra: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        shell: bash
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.extra }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: DubSkankSub-${{ matrix.name }}-vst3
+          path: build/DubSkankSub_artefacts/*/VST3
+
+      - name: Upload Standalone
+        uses: actions/upload-artifact@v4
+        with:
+          name: DubSkankSub-${{ matrix.name }}-standalone
+          path: build/DubSkankSub_artefacts/*/Standalone
